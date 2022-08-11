@@ -14,7 +14,7 @@ BOOL runFactorio();
 DWORD waitForFactorio();
 HANDLE openFactorio(DWORD id);
 void setProcessSuspendThreads(DWORD id, BOOL suspend);
-void injectLibrary(HANDLE processHandle);
+void injectLibrary(HANDLE processHandle, const char* libraryPath);
 void criticalError();
 
 #endif //LUA_HOOK_TEST_INJECTOR_MAIN_H

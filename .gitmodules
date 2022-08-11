@@ -1,0 +1,6 @@
+[submodule "include/lua"]
+	path = include/lua
+	url = https://github.com/lua/lua.git
+[submodule "include/minhook"]
+	path = include/minhook
+	url = https://github.com/TsudaKageyu/minhook.git

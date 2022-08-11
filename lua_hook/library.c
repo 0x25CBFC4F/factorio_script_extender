@@ -1,59 +1,40 @@
 #include "library.h"
-#include "typedefs.h"
 
-BOOL DllMain(HINSTANCE libraryHandle, DWORD fdwReason, LPVOID lpReserved) {
-    if(fdwReason != DLL_PROCESS_ATTACH) {
-        return TRUE;
-    }
-
+BOOL OnAttach() {
     AllocateConsole();
 
-    HMODULE factorioModule = GetModuleHandle("factorio.exe");
-    lua_newStatePtr luaNewStateAddr = (lua_newStatePtr) GetProcAddress(factorioModule, "lua_newstate");
+    if(!ResolveFunctions()) {
+        Log("Failed to initialize.");
+        return FALSE;
+    }
 
-    Log("Got module at %p", factorioModule);
-    Log("Got lua_newstate at %p (GetProcAddress)", luaNewStateAddr);
+    if(!InitializeHooks()) {
+        Log("Failed to hook required functions.");
+        return FALSE;
+    }
 
-    setSuspendThreads(FALSE);
+    Log("Initialization complete.");
+
+    SetThreadsSuspended(FALSE);
 
     return TRUE;
 }
 
-void AllocateConsole() {
-    AllocConsole();
-    SetConsoleTitle("Factorio Script Extender");
-    freopen("CONOUT$", "w", stdout);
+BOOL OnDetach() {
+    DeinitializeHooks();
+    Log("Bye-bye!");
 
-    Log("==================================================");
-    Log("========      Factorio Script Extender     =======");
-    Log("==================================================");
-    Log("\n");
+    return TRUE;
 }
 
-void setSuspendThreads(BOOL suspend) {
-    DWORD currentProcessId = GetCurrentProcessId();
-    HANDLE hThreadSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+BOOL DllMain(HINSTANCE libraryHandle, DWORD fdwReason, LPVOID lpReserved) {
+    if(fdwReason == DLL_PROCESS_ATTACH) {
+        return OnAttach();
+    }
 
-    THREADENTRY32 threadEntry;
-    threadEntry.dwSize = sizeof(THREADENTRY32);
+    if(fdwReason == DLL_PROCESS_DETACH) {
+        return OnDetach();
+    }
 
-    Thread32First(hThreadSnapshot, &threadEntry);
-
-    do
-    {
-        if (threadEntry.th32OwnerProcessID == currentProcessId)
-        {
-            HANDLE hThread = OpenThread(THREAD_ALL_ACCESS, FALSE,threadEntry.th32ThreadID);
-
-            if(suspend) {
-                SuspendThread(hThread);
-            } else {
-                ResumeThread(hThread);
-            }
-
-            CloseHandle(hThread);
-        }
-    } while (Thread32Next(hThreadSnapshot, &threadEntry));
-
-    CloseHandle(hThreadSnapshot);
+    return TRUE;
 }

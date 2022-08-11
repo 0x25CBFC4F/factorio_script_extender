@@ -25,13 +25,14 @@ int main() {
     printf("Opened Factorio handle: %p\n", factorioHandle);
     setProcessSuspendThreads(factorioProcessId, TRUE);
 
-    printf("Suspended process.");
+    printf("Suspended process..\n");
 
-    injectLibrary(factorioHandle);
+    printf("Injecting SE..\n");
+    injectLibrary(factorioHandle, "C:\\Users\\null\\CLionProjects\\lua-hook-test\\cmake-build-debug\\lua_hook_test.dll");
 
-    //setProcessSuspendThreads(factorioProcessId, FALSE);
+    printf("Injecting done! :)\n");
 
-    printf("Unsuspended process.");
+    Sleep(1000);
 
     return 0;
 }
@@ -106,16 +107,17 @@ void setProcessSuspendThreads(DWORD id, BOOL suspend) {
     CloseHandle(hThreadSnapshot);
 }
 
-void injectLibrary(HANDLE processHandle) {
+void injectLibrary(HANDLE processHandle, const char* libraryPath) {
     FARPROC loadLibraryAddress = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");
-    const char* libraryPath = "C:\\Users\\null\\CLionProjects\\lua-hook-test\\cmake-build-debug\\lua_hook_test.dll";
     LPVOID libraryPathMem = VirtualAllocEx(processHandle, NULL, strlen(libraryPath) + 1, MEM_COMMIT, PAGE_READWRITE);
 
     size_t bytesWritten = 0;
     WriteProcessMemory(processHandle, libraryPathMem, libraryPath, strlen(libraryPath), &bytesWritten);
 
     DWORD threadId = 0;
-    CreateRemoteThread(processHandle, NULL, NULL, loadLibraryAddress, libraryPathMem, 0, &threadId);
+    HANDLE remoteThread = CreateRemoteThread(processHandle, NULL, NULL, (LPTHREAD_START_ROUTINE)loadLibraryAddress, libraryPathMem, 0, &threadId);
+
+    WaitForSingleObject(remoteThread, INFINITE);
 }
 
 void criticalError() {

@@ -1,7 +1,7 @@
 # Factorio Script Extender
 
 This was a small pet project to extend Factorio's LUA API.
-You can use this is a small (and surely not ready for production!) framework.
+You can use this small (and surely not ready for production!) framework to inject some custom C functions in Factorio.
 
 ## Things to fix:
 
